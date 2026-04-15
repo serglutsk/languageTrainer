@@ -4,13 +4,26 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Dictionary extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
-        'language_id', 'key', 'value',
+        'lang_text',
+        'translation',
+        'status',
+        'amount_right',
+        'amount_fail',
+        'status_card',
+        'example',
+        'comment',
+        'image',
+        'user_id',
+        'language_id',
     ];
 
     public function language(): BelongsTo

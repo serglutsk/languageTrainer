@@ -19,6 +19,7 @@ trait ProfileValidationRules
         return [
             'name' => $this->nameRules(),
             'email' => $this->emailRules($userId),
+            'language_id' => $this->languageIdRules(),
         ];
     }
 
@@ -48,5 +49,13 @@ trait ProfileValidationRules
                 ? Rule::unique(User::class)
                 : Rule::unique(User::class)->ignore($userId),
         ];
+    }
+
+    /**
+     * @return array<int, \Illuminate\Contracts\Validation\Rule|array<mixed>|string>
+     */
+    protected function languageIdRules(): array
+    {
+        return ['nullable', 'integer', 'exists:languages,id'];
     }
 }

@@ -2,8 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Models\Language;
 use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+
+uses(RefreshDatabase::class);
 
 test('profile page is displayed', function () {
     $this->actingAs($user = User::factory()->create());
@@ -13,12 +17,14 @@ test('profile page is displayed', function () {
 
 test('profile information can be updated', function () {
     $user = User::factory()->create();
+    $language = Language::factory()->create();
 
     $this->actingAs($user);
 
     $response = Livewire::test('pages::settings.profile')
         ->set('name', 'Test User')
         ->set('email', 'test@example.com')
+        ->set('language_id', $language->id)
         ->call('updateProfileInformation');
 
     $response->assertHasNoErrors();
@@ -28,6 +34,7 @@ test('profile information can be updated', function () {
     expect($user->name)->toEqual('Test User');
     expect($user->email)->toEqual('test@example.com');
     expect($user->email_verified_at)->toBeNull();
+    expect($user->language_id)->toEqual($language->id);
 });
 
 test('email verification status is unchanged when email address is unchanged', function () {

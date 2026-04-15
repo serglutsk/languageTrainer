@@ -1,6 +1,7 @@
 <?php
 
 use App\Concerns\ProfileValidationRules;
+use App\Models\Language;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
@@ -13,6 +14,7 @@ new #[Title('Profile settings')] class extends Component {
 
     public string $name = '';
     public string $email = '';
+    public ?int $language_id = null;
 
     /**
      * Mount the component.
@@ -21,6 +23,7 @@ new #[Title('Profile settings')] class extends Component {
     {
         $this->name = Auth::user()->name;
         $this->email = Auth::user()->email;
+        $this->language_id = Auth::user()->language_id;
     }
 
     /**
@@ -41,6 +44,14 @@ new #[Title('Profile settings')] class extends Component {
         $user->save();
 
         Flux::toast(variant: 'success', text: __('Profile updated.'));
+    }
+
+    #[Computed]
+    public function languages()
+    {
+        return Language::query()
+            ->orderBy('name')
+            ->get();
     }
 
     /**
@@ -83,6 +94,13 @@ new #[Title('Profile settings')] class extends Component {
     <x-pages::settings.layout :heading="__('Profile')" :subheading="__('Update your name and email address')">
         <form wire:submit="updateProfileInformation" class="my-6 w-full space-y-6">
             <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
+
+            <flux:select wire:model="language_id" :label="__('Learning language')">
+                <option value="">{{ __('— Select —') }}</option>
+                @foreach ($this->languages as $language)
+                    <option value="{{ $language->id }}">{{ $language->name }} ({{ $language->code }})</option>
+                @endforeach
+            </flux:select>
 
             <div>
                 <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" />

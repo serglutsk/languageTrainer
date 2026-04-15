@@ -23,6 +23,9 @@
                     <flux:sidebar.item icon="language" :href="route('dictionary.index')" :current="request()->routeIs('dictionary.index')" wire:navigate>
                         {{ __('My Dictionary') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="academic-cap" :href="route('exercises.index')" :current="request()->routeIs('exercises.index')" wire:navigate>
+                        {{ __('Do exercises') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 

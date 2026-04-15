@@ -14,6 +14,8 @@
             <flux:table.column>{{ __('Value') }}</flux:table.column>
             <flux:table.column>{{ __('Translation') }}</flux:table.column>
             <flux:table.column>{{ __('Status') }}</flux:table.column>
+            <flux:table.column>{{ __('Audio actions') }}</flux:table.column>
+            <flux:table.column>{{ __('Amount Fail') }}</flux:table.column>
             <flux:table.column align="end">{{ __('Actions') }}</flux:table.column>
         </flux:table.columns>
 
@@ -22,21 +24,85 @@
                 <flux:table.row :key="$word->id">
                     <flux:table.cell>{{ $word->lang_text }}</flux:table.cell>
                     <flux:table.cell>{{ $word->translation }}</flux:table.cell>
-                    <flux:table.cell>{{ $word->status }}</flux:table.cell>
+                    <flux:table.cell>{{ !$word->status ? __('New') : __('Old') }}</flux:table.cell>
+                    <flux:table.cell>
+                        <flux:tooltip :content="__('Pronounce')" position="bottom">
+                            <flux:button
+                                variant="ghost"
+                                icon="play-circle"
+                                size="sm"
+                                wire:click="speak({{ $word->id }})"
+                                aria-label="{{ __('Pronounce') }}"
+                            />
+                        </flux:tooltip>
+                        @if($word->example)
+                            <flux:tooltip :content="__('Pronounce example')" position="bottom">
+                                <flux:button
+                                    variant="ghost"
+                                    icon="play"
+                                    size="sm"
+                                    wire:click="speakExample({{ $word->id }})"
+                                    aria-label="{{ __('Pronounce example') }}"
+                                />
+                            </flux:tooltip>
+
+                        @endif
+                    </flux:table.cell>
+                    <flux:table.cell>{{ $word->amount_fail }} {{ __('times') }}</flux:table.cell>
                     <flux:table.cell align="end">
                         <flux:button variant="ghost" icon="pencil-square" size="sm" wire:click="edit({{ $word->id }})" />
-                       <flux:button variant="ghost" color="danger" icon="trash" size="sm" wire:click="remove({{ $word->id }})" wire:confirm="{{ __('Are you sure you want to delete this $word?')}}" />
+                       <flux:button variant="ghost" color="danger" icon="trash" size="sm" wire:click="remove({{ $word->id }})" wire:confirm="{{ __('Are you sure you want to delete this word?') }}" />
                     </flux:table.cell>
                 </flux:table.row>
             @endforeach
         </flux:table.rows>
     </flux:table>
 
+    <script>
+        function keepOnlyEnglishAndPunctuation(text) {
+            // This regex removes characters that belong to Cyrillic or other non-Latin scripts
+            // while trying to preserve the flow of the English sentence.
+            return text
+                .replace(/[^\p{Script=Latin}\p{Punctuation}\p{Separator}\p{Number}]/gu, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+        document.addEventListener('livewire:init', () => {
+            Livewire.on('speak', ({ text, lang }) => {
+                if (!('speechSynthesis' in window)) {
+                    return;
+                }
+
+                const synth = window.speechSynthesis;
+
+                if (synth.speaking) {
+                    synth.cancel();
+                }
+                text = keepOnlyEnglishAndPunctuation(text);
+                if (!text) {
+                    return;
+                }
+
+                const utter = new SpeechSynthesisUtterance(text);
+                utter.lang = lang || 'en-US';
+
+                const voices = synth.getVoices?.() ?? [];
+                const preferred = voices.find(v => v.lang === utter.lang) ?? voices.find(v => v.lang?.startsWith('en'));
+
+                if (preferred) {
+                    utter.voice = preferred;
+                }
+
+                synth.speak(utter);
+            });
+        });
+    </script>
+
     <!-- pop-up -->
     <flux:modal name="word-modal" class="md:w-[400px]">
         <form wire:submit="save" class="space-y-6">
             <div>
-                <flux:heading size="lg">{{ $form->lang_text ? __('Edit Word') : __('New Word') }}</flux:heading>
+                <flux:heading size="lg">{{ $form->dictionary ? __('Edit Word') : __('New Word') }}</flux:heading>
                 <flux:subheading>{{ __('Fill in the details below.') }}</flux:subheading>
             </div>
 
